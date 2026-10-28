@@ -5,6 +5,7 @@ import { RequireAuth } from '@/features/auth/RequireAuth';
 import { ROLES } from '@/lib/constants';
 import { useAuthStore } from '@/stores/authStore';
 
+const LandingPage = lazy(() => import('@/features/landing/LandingPage'));
 const AuthPage = lazy(() => import('@/features/auth/AuthPage'));
 const BranchLayout = lazy(() =>
   import('@/app/layouts/BranchLayout').then((module) => ({
@@ -49,6 +50,14 @@ export function App() {
       future={{ v7_startTransition: true, v7_relativeSplatPath: true }}
     >
       <Routes>
+        <Route
+          path="/"
+          element={
+            <Suspense fallback={<div className="route-loading" role="status">Loading RuralAttend…</div>}>
+              <LandingPage />
+            </Suspense>
+          }
+        />
         <Route element={<AuthLayout />}>
           <Route
             path="/login"
@@ -112,7 +121,7 @@ export function App() {
             }
           />
         </Route>
-        <Route path="*" element={<Navigate to="/login" replace />} />
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>
   );

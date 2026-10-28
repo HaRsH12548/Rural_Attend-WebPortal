@@ -1,5 +1,5 @@
-import { BookOpenCheck } from 'lucide-react';
-import { Outlet } from 'react-router-dom';
+import { BookOpenCheck, ArrowLeft } from 'lucide-react';
+import { Link, Outlet } from 'react-router-dom';
 
 /**
  * Split-screen login frame with a rural school illustration.
@@ -9,11 +9,30 @@ export function AuthLayout() {
   return (
     <main className="auth-shell">
       <section className="auth-panel" aria-label="Administrator sign in">
-        <div className="brand-lockup">
-          <span className="brand-mark" aria-hidden="true">
-            <BookOpenCheck size={22} strokeWidth={2.1} />
-          </span>
-          <span className="brand-name">RuralAttend</span>
+        <div style={{ width: 'min(100%, 420px)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+          <Link to="/" className="brand-lockup" style={{ textDecoration: 'none' }} title="Return to Overview">
+            <span className="brand-mark" aria-hidden="true">
+              <BookOpenCheck size={22} strokeWidth={2.1} />
+            </span>
+            <span className="brand-name">RuralAttend</span>
+          </Link>
+          <Link
+            to="/"
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 5,
+              fontSize: 12.5,
+              fontWeight: 600,
+              color: 'var(--muted)',
+              textDecoration: 'none',
+              padding: '4px 8px',
+              borderRadius: 6,
+            }}
+          >
+            <ArrowLeft size={14} />
+            Back to Home
+          </Link>
         </div>
 
         <Outlet />

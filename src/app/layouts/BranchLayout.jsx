@@ -1,6 +1,7 @@
 import {
   BookOpenCheck,
   Calendar,
+  CalendarDays,
   Check,
   ChevronDown,
   ClipboardCheck,
