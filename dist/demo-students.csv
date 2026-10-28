@@ -1,0 +1,6 @@
+# WARNING: Make sure the Class and Section (e.g. Class 1 Section A) are already created in the database before listing them in this file. Students assigned to non-existent classes will be rejected during upload.
+Name,Class,Section
+Asha Patel,Class 1,A
+Ravi Kumar,Class 2,B
+Samira Khan,Class 1,A
+David Ochieng,Class 3,A
