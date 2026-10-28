@@ -268,27 +268,40 @@ export function saveClassAttendance({
  * @returns {Promise<object>} Report compilation result.
  */
 export async function getAttendanceReport({
-  branchId,
+  branchId = 'all',
   academicYearId,
   startDate,
   endDate,
   classId = 'all',
 }) {
   return simulate(async () => {
-    const branchExists = db.branches.some((branch) => branch.id === branchId);
-    if (!branchExists) {
-      throw new AppError({
-        code: 'BRANCH_NOT_FOUND',
-        message: 'The assigned branch could not be found.',
-      });
+    const isAllBranches = !branchId || branchId === 'all';
+    let targetBranches = [];
+
+    if (isAllBranches) {
+      targetBranches = db.branches || [];
+    } else {
+      const branch = (db.branches || []).find((b) => b.id === branchId);
+      if (!branch) {
+        throw new AppError({
+          code: 'BRANCH_NOT_FOUND',
+          message: 'The assigned branch could not be found.',
+        });
+      }
+      targetBranches = [branch];
     }
 
-    const branch = db.branches.find((b) => b.id === branchId);
-    const activeYear = db.academicYears?.find((ay) => ay.branchId === branchId && (academicYearId ? ay.id === academicYearId : ay.isActive));
+    const singleBranch = isAllBranches ? null : targetBranches[0];
+    const activeYear = db.academicYears?.find((ay) =>
+      isAllBranches
+        ? ay.isActive
+        : ay.branchId === branchId && (academicYearId ? ay.id === academicYearId : ay.isActive),
+    );
 
-    // Target classes
-    const branchClasses = db.classes.filter((c) => {
-      if (c.branchId !== branchId) return false;
+    // Target classes across the target branches
+    const targetBranchIds = new Set(targetBranches.map((b) => b.id));
+    const branchClasses = (db.classes || []).filter((c) => {
+      if (!targetBranchIds.has(c.branchId)) return false;
       if (academicYearId && c.academicYearId !== academicYearId) return false;
       if (classId && classId !== 'all' && c.id !== classId) return false;
       return true;
@@ -296,7 +309,8 @@ export async function getAttendanceReport({
 
     if (branchClasses.length === 0) {
       return {
-        branchName: branch?.name ?? 'Branch',
+        branchName: singleBranch?.name ?? (isAllBranches ? 'All Campuses (Organization-Wide)' : 'Branch'),
+        branchId: isAllBranches ? 'all' : branchId,
         academicYearName: activeYear?.name ?? 'Current Academic Year',
         period: { startDate, endDate },
         summary: {
@@ -306,7 +320,21 @@ export async function getAttendanceReport({
           totalEnrolled: 0,
           daysCount: 0,
           sessionsCount: 0,
+          branchesCount: targetBranches.length,
+          classesCount: 0,
         },
+        branchBreakdown: targetBranches.map((b) => ({
+          branchId: b.id,
+          branchName: b.name,
+          branchCode: b.code,
+          classesCount: 0,
+          enrolledCount: 0,
+          daysCount: 0,
+          presentCount: 0,
+          absentCount: 0,
+          attendanceRate: 0,
+          status: 'Fair',
+        })),
         classBreakdown: [],
         dailyBreakdown: [],
         studentBreakdown: [],
@@ -344,11 +372,15 @@ export async function getAttendanceReport({
     const classStatsMap = new Map(); // classId -> { present, absent, daysCount }
 
     branchClasses.forEach((cls) => {
+      const clsBranch = (db.branches || []).find((b) => b.id === cls.branchId);
       classStatsMap.set(cls.id, {
         classId: cls.id,
         className: cls.name,
         grade: cls.grade,
         section: cls.section,
+        branchId: cls.branchId,
+        branchName: clsBranch?.name || 'Campus',
+        branchCode: clsBranch?.code || 'BR',
         enrolledCount: cls.studentCount || 0,
         presentCount: 0,
         absentCount: 0,
@@ -376,7 +408,10 @@ export async function getAttendanceReport({
         } else {
           // Deterministic simulation for realistic report preview
           const total = cls.studentCount || 24;
-          const hash = (dateStr.split('-').reduce((acc, v) => acc + Number(v), 0) + cls.id.charCodeAt(cls.id.length - 1)) % 7;
+          const hash =
+            (dateStr.split('-').reduce((acc, v) => acc + Number(v), 0) +
+              cls.id.charCodeAt(cls.id.length - 1)) %
+            7;
           absent = Math.max(1, Math.round(total * (0.05 + hash * 0.012)));
           present = Math.max(0, total - absent);
         }
@@ -422,6 +457,28 @@ export async function getAttendanceReport({
       };
     });
 
+    // Compile branch breakdown
+    const branchBreakdown = targetBranches.map((br) => {
+      const brClasses = classBreakdown.filter((c) => c.branchId === br.id);
+      const brPresent = brClasses.reduce((sum, c) => sum + c.presentCount, 0);
+      const brAbsent = brClasses.reduce((sum, c) => sum + c.absentCount, 0);
+      const brEnrolled = brClasses.reduce((sum, c) => sum + c.enrolledCount, 0);
+      const total = brPresent + brAbsent;
+      const rate = total > 0 ? Math.round((brPresent / total) * 100) : 0;
+      return {
+        branchId: br.id,
+        branchName: br.name,
+        branchCode: br.code,
+        classesCount: brClasses.length,
+        enrolledCount: brEnrolled,
+        daysCount: validDates.length,
+        presentCount: brPresent,
+        absentCount: brAbsent,
+        attendanceRate: rate,
+        status: rate >= 90 ? 'Good' : rate >= 80 ? 'Fair' : 'Needs Attention',
+      };
+    });
+
     const overallTotal = grandTotalPresent + grandTotalAbsent;
     const overallRate = overallTotal > 0 ? Math.round((grandTotalPresent / overallTotal) * 100) : 0;
 
@@ -448,6 +505,9 @@ export async function getAttendanceReport({
             admissionNo: std.admissionNo,
             className: cls.name,
             grade: cls.grade,
+            branchId: cls.branchId,
+            branchName: cls.branchName,
+            branchCode: cls.branchCode,
             presentDays,
             absentDays,
             totalDays: days,
@@ -460,7 +520,10 @@ export async function getAttendanceReport({
     }
 
     return {
-      branchName: branch?.name ?? 'Branch',
+      branchName: isAllBranches
+        ? db.organization?.name || 'All Campuses (Organization-Wide)'
+        : singleBranch?.name ?? 'Branch',
+      branchId: isAllBranches ? 'all' : branchId,
       academicYearName: activeYear?.name ?? '2024–2025',
       period: {
         startDate,
@@ -474,7 +537,10 @@ export async function getAttendanceReport({
         totalEnrolled: grandTotalEnrolled,
         daysCount: validDates.length,
         sessionsCount: validDates.length * branchClasses.length,
+        branchesCount: targetBranches.length,
+        classesCount: branchClasses.length,
       },
+      branchBreakdown,
       classBreakdown,
       dailyBreakdown,
       studentBreakdown,

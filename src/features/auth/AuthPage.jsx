@@ -33,7 +33,7 @@ export default function AuthPage() {
   if (user) {
     return (
       <Navigate
-        to={can(user, PERMISSIONS.SCHOOL_ACCESS) ? '/school/dashboard' : '/branch/attendance'}
+        to={can(user, PERMISSIONS.SCHOOL_ACCESS) ? '/school/branches' : '/branch/attendance'}
         replace
       />
     );
@@ -51,7 +51,7 @@ export default function AuthPage() {
       setUser(authenticatedUser);
       navigate(
         can(authenticatedUser, PERMISSIONS.SCHOOL_ACCESS)
-          ? '/school/dashboard'
+          ? '/school/branches'
           : '/branch/attendance',
         { replace: true },
       );

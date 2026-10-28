@@ -7,6 +7,16 @@ import { useAuthStore } from '@/stores/authStore';
 
 const LandingPage = lazy(() => import('@/features/landing/LandingPage'));
 const AuthPage = lazy(() => import('@/features/auth/AuthPage'));
+const SchoolLayout = lazy(() =>
+  import('@/app/layouts/SchoolLayout').then((module) => ({
+    default: module.SchoolLayout,
+  })),
+);
+const BranchesPage = lazy(() => import('@/features/school/BranchesPage'));
+const BranchAdminsPage = lazy(() => import('@/features/school/BranchAdminsPage'));
+const SchoolAttendanceAnalyticsPage = lazy(() => import('@/features/school/SchoolAttendanceAnalyticsPage'));
+const SchoolSettingsPage = lazy(() => import('@/features/school/SchoolSettingsPage'));
+
 const BranchLayout = lazy(() =>
   import('@/app/layouts/BranchLayout').then((module) => ({
     default: module.BranchLayout,
@@ -16,29 +26,6 @@ const AttendancePage = lazy(() => import('@/features/attendance/AttendancePage')
 const ClassesPage = lazy(() => import('@/features/classes/ClassesPage'));
 const TeachersPage = lazy(() => import('@/features/teachers/TeachersPage'));
 const StudentsPage = lazy(() => import('@/features/students/StudentsPage'));
-
-function SchoolWorkspacePlaceholder() {
-  const clearUser = useAuthStore((state) => state.clearUser);
-  const navigate = useNavigate();
-
-  function handleSignOut() {
-    clearUser();
-    navigate('/login', { replace: true });
-  }
-
-  return (
-    <main className="workspace-placeholder">
-      <div className="workspace-placeholder-card">
-        <p className="eyebrow-text">RuralAttend</p>
-        <h1>School workspace coming soon</h1>
-        <p>A dedicated school administration workspace for this account is being prepared.</p>
-        <button className="primary-button" type="button" onClick={handleSignOut}>
-          Sign out
-        </button>
-      </div>
-    </main>
-  );
-}
 
 /**
  * Provides the application route tree.
@@ -69,13 +56,50 @@ export function App() {
           />
         </Route>
         <Route
-          path="/school/dashboard"
+          path="/school"
           element={
             <RequireAuth role={ROLES.SCHOOL_ADMIN}>
-              <SchoolWorkspacePlaceholder />
+              <Suspense fallback={<div className="route-loading" role="status">Loading school portal…</div>}>
+                <SchoolLayout />
+              </Suspense>
             </RequireAuth>
           }
-        />
+        >
+          <Route index element={<Navigate to="branches" replace />} />
+          <Route path="dashboard" element={<Navigate to="/school/branches" replace />} />
+          <Route
+            path="branches"
+            element={
+              <Suspense fallback={<div className="route-loading" role="status">Loading branches…</div>}>
+                <BranchesPage />
+              </Suspense>
+            }
+          />
+          <Route
+            path="admins"
+            element={
+              <Suspense fallback={<div className="route-loading" role="status">Loading branch admins…</div>}>
+                <BranchAdminsPage />
+              </Suspense>
+            }
+          />
+          <Route
+            path="attendance"
+            element={
+              <Suspense fallback={<div className="route-loading" role="status">Loading attendance analytics…</div>}>
+                <SchoolAttendanceAnalyticsPage />
+              </Suspense>
+            }
+          />
+          <Route
+            path="settings"
+            element={
+              <Suspense fallback={<div className="route-loading" role="status">Loading settings…</div>}>
+                <SchoolSettingsPage />
+              </Suspense>
+            }
+          />
+        </Route>
         <Route
           path="/branch"
           element={

@@ -1,10 +1,12 @@
 import {
   seededAcademicYears,
   seededAttendanceSessions,
+  seededAuditLogs,
   seededBranchActionItems,
   seededBranchDashboardStats,
   seededBranches,
   seededClasses,
+  seededOrganization,
   seededStudents,
   seededTeachers,
   seededUsers,
@@ -20,4 +22,7 @@ export const db = {
   branchDashboardStats: [...seededBranchDashboardStats],
   branchActionItems: [...seededBranchActionItems],
   attendanceSessions: [...seededAttendanceSessions],
+  auditLogs: [...seededAuditLogs],
+  organization: { ...seededOrganization },
 };
+

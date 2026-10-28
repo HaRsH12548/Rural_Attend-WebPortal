@@ -4922,3 +4922,545 @@ input:focus-visible {
   white-space: nowrap !important;
   border: 0 !important;
 }
+
+/* ==========================================================================
+   SCHOOL ADMIN PORTAL DESIGN SYSTEM
+   ========================================================================== */
+
+/* Organization Context Pill & Header */
+.school-org-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  height: 34px;
+  padding: 0 12px;
+  background: #eef6f3;
+  border: 1px solid #c2dfd4;
+  border-radius: 6px;
+  color: #1a5743;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.school-cycle-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 34px;
+  padding: 0 11px;
+  background: #f4f7f8;
+  border: 1px solid #dce4e6;
+  border-radius: 6px;
+  color: #3b5666;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.school-hero-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* Branch Cards Grid */
+.school-branches-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+  gap: 16px;
+  margin: 18px 34px 32px;
+}
+
+.school-branch-card {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 20px;
+  background: #fff;
+  border: 1px solid #e1e8e9;
+  border-radius: 10px;
+  box-shadow: 0 2px 6px rgba(20, 47, 66, 0.03);
+  transition: transform 150ms ease, box-shadow 150ms ease, border-color 150ms ease;
+}
+
+.school-branch-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(20, 47, 66, 0.08);
+  border-color: #cbd8dc;
+}
+
+.school-branch-card.branch-card-inactive {
+  opacity: 0.75;
+  background: #fafcfb;
+  border-style: dashed;
+}
+
+.branch-card-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.branch-card-identity {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.branch-card-avatar {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 8px;
+  background: #eef6f3;
+  color: #17664f;
+  flex-shrink: 0;
+}
+
+.branch-card-title h3 {
+  margin: 0 0 3px;
+  color: #173243;
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1.25;
+}
+
+.branch-card-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  color: #697e88;
+}
+
+.branch-code-pill {
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: #e9f0f2;
+  color: #2e4d5d;
+  font-weight: 700;
+  font-size: 10px;
+  letter-spacing: 0.5px;
+}
+
+.branch-status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.branch-status-pill.status-active {
+  background: #eaf8f1;
+  color: #177359;
+}
+
+.branch-status-pill.status-inactive {
+  background: #f1f3f4;
+  color: #677883;
+}
+
+.branch-card-description {
+  margin: 0 0 16px;
+  color: #5c727e;
+  font-size: 12px;
+  line-height: 1.5;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.branch-metrics-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  padding: 10px 12px;
+  background: #f8fafb;
+  border: 1px solid #edf2f4;
+  border-radius: 7px;
+  margin-bottom: 16px;
+}
+
+.branch-metric-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.branch-metric-cell span {
+  font-size: 10px;
+  color: #798d97;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  font-weight: 600;
+}
+
+.branch-metric-cell strong {
+  font-size: 15px;
+  color: #193444;
+  font-weight: 700;
+}
+
+.branch-admin-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding-top: 12px;
+  border-top: 1px solid #edf2f3;
+  margin-bottom: 16px;
+  font-size: 12px;
+}
+
+.branch-admin-info {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  color: #4b6370;
+}
+
+.branch-admin-info strong {
+  color: #1d3546;
+}
+
+.branch-card-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+/* One-time Issued Credentials Dialog */
+.credentials-slip-dialog {
+  max-width: 520px;
+}
+
+.credentials-slip-box {
+  position: relative;
+  margin: 16px 0;
+  padding: 18px 20px;
+  background: #fcfdfd;
+  border: 2px dashed #b7d6ca;
+  border-radius: 8px;
+}
+
+.slip-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 12px;
+  margin-bottom: 14px;
+  border-bottom: 1px solid #e7efe9;
+}
+
+.slip-brand {
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 16px;
+  font-weight: 700;
+  color: #174233;
+}
+
+.slip-date {
+  font-size: 11px;
+  color: #728c81;
+}
+
+.slip-field-group {
+  display: grid;
+  gap: 12px;
+}
+
+.slip-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.slip-field label {
+  font-size: 10px;
+  font-weight: 700;
+  color: #557266;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.slip-value-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 8px 12px;
+  background: #ffffff;
+  border: 1px solid #d4e4dc;
+  border-radius: 6px;
+}
+
+.slip-value-row code {
+  font-family: Consolas, Monaco, 'Courier New', monospace;
+  font-size: 14px;
+  font-weight: 700;
+  color: #113629;
+  letter-spacing: 0.5px;
+}
+
+.slip-copy-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 8px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #17664f;
+  background: #eef6f3;
+  border: 1px solid #cfe2d8;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: all 120ms ease;
+}
+
+.slip-copy-btn:hover {
+  background: #dff0e7;
+  color: #0d4a37;
+}
+
+.credentials-warning-box {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px 14px;
+  background: #fff8eb;
+  border: 1px solid #f9e2b8;
+  border-radius: 7px;
+  color: #8c5d14;
+  font-size: 12px;
+  line-height: 1.45;
+  margin-top: 14px;
+}
+
+.credentials-warning-box strong {
+  display: block;
+  color: #724707;
+  font-weight: 700;
+  margin-bottom: 2px;
+}
+
+/* Branch Drilldown Dialog */
+.drilldown-dialog {
+  max-width: 820px;
+  width: 95vw;
+}
+
+.drilldown-header-summary {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+  padding: 12px 16px;
+  background: #f4f8f6;
+  border: 1px solid #d4e6dc;
+  border-radius: 8px;
+  margin-bottom: 20px;
+}
+
+.drilldown-classes-table-wrap {
+  max-height: 380px;
+  overflow-y: auto;
+  border: 1px solid #e1e8e9;
+  border-radius: 8px;
+}
+
+/* Attendance Analytics Comparison Bars */
+.analytics-comparison-card {
+  margin: 18px 34px 24px;
+  padding: 22px;
+  background: #fff;
+  border: 1px solid #e1e8e9;
+  border-radius: 10px;
+}
+
+.comparison-list {
+  display: grid;
+  gap: 14px;
+  margin-top: 16px;
+}
+
+.comparison-branch-row {
+  display: grid;
+  grid-template-columns: 220px 1fr 140px;
+  align-items: center;
+  gap: 16px;
+}
+
+.comparison-branch-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.comparison-branch-info strong {
+  font-size: 13px;
+  color: #1b3544;
+}
+
+.comparison-branch-info small {
+  font-size: 11px;
+  color: #718691;
+}
+
+.comparison-track {
+  height: 10px;
+  background: #edf2f4;
+  border-radius: 999px;
+  overflow: hidden;
+  position: relative;
+}
+
+.comparison-bar {
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #3aa37f 0%, #227b5e 100%);
+  transition: width 400ms ease;
+}
+
+.comparison-bar.bar-warning {
+  background: linear-gradient(90deg, #e59325 0%, #c47309 100%);
+}
+
+.comparison-numbers {
+  text-align: right;
+  font-size: 12px;
+  color: #294553;
+}
+
+.comparison-numbers strong {
+  font-size: 14px;
+  color: #173243;
+}
+
+/* Audit Log Table */
+.audit-table-wrap {
+  margin: 18px 34px 32px;
+  background: #fff;
+  border: 1px solid #e1e8e9;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.audit-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: 12px;
+}
+
+.audit-table th {
+  padding: 12px 16px;
+  background: #f7faf9;
+  border-bottom: 1px solid #e4eaeb;
+  color: #5d7582;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.audit-table td {
+  padding: 13px 16px;
+  border-bottom: 1px solid #edf2f3;
+  color: #26404d;
+}
+
+.audit-table tr:hover td {
+  background: #fbfdfc;
+}
+
+.audit-action-badge {
+  display: inline-block;
+  padding: 2px 7px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+}
+
+.audit-action-badge.action-create {
+  background: #e2f4ed;
+  color: #136248;
+}
+
+.audit-action-badge.action-credentials {
+  background: #f1edfb;
+  color: #55329c;
+}
+
+.audit-action-badge.action-reset {
+  background: #fff1e3;
+  color: #9c4b00;
+}
+
+.audit-action-badge.action-status {
+  background: #e8f0fe;
+  color: #1a56db;
+}
+
+.audit-action-badge.action-settings {
+  background: #f0f3f4;
+  color: #4b626e;
+}
+
+/* Alert Notification Strip */
+.school-alert-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  margin: 16px 34px 0;
+  padding: 12px 18px;
+  background: #fff8eb;
+  border: 1px solid #f4dba8;
+  border-radius: 8px;
+  color: #8c5d14;
+}
+
+.school-alert-banner strong {
+  color: #724707;
+  font-size: 13px;
+}
+
+.school-alert-banner p {
+  margin: 2px 0 0;
+  font-size: 12px;
+  color: #8c5d14;
+}
+
+/* Print Slip Styles */
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  .credentials-slip-box,
+  .credentials-slip-box * {
+    visibility: visible;
+  }
+  .credentials-slip-box {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    border: 1px solid #000;
+    padding: 24px;
+  }
+  .slip-copy-btn,
+  .students-dialog-actions,
+  .credentials-warning-box {
+    display: none !important;
+  }
+}
+

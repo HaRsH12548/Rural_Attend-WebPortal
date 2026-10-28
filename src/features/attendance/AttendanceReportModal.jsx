@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import {
+  Building2,
   Calendar,
   CheckCircle,
   Download,
@@ -61,22 +62,39 @@ function downloadReportCSV(report) {
   if (!report) return;
 
   const lines = [];
+  const isMultiBranch = report.branchId === 'all' || (report.branchBreakdown && report.branchBreakdown.length > 1);
 
   // Metadata headers
-  lines.push(`"RuralAttend - Branch Attendance Report"`);
-  lines.push(`"Branch","${report.branchName || 'School Branch'}"`);
+  lines.push(`"RuralAttend - ${isMultiBranch ? 'Organization' : 'Branch'} Attendance Report"`);
+  lines.push(`"${isMultiBranch ? 'Institution' : 'Branch'}","${report.branchName || 'RuralAttend'}"`);
   lines.push(`"Academic Session","${report.academicYearName || 'Current'}"`);
   lines.push(`"Date Period","${report.period.startDate} to ${report.period.endDate}"`);
   lines.push(`"Overall Attendance Rate","${report.summary.overallRate}%"`);
   lines.push(`"Generated At","${new Date().toLocaleString()}"`);
   lines.push('');
 
+  // Branch breakdown section (if multi-branch report)
+  if (isMultiBranch && report.branchBreakdown && report.branchBreakdown.length > 0) {
+    lines.push(`"REGIONAL CAMPUS BREAKDOWN"`);
+    lines.push(
+      `"Campus Name","Campus Code","Classes Count","Enrolled Students","Days Logged","Present Marks","Absent Marks","Attendance Rate (%)"`,
+    );
+    report.branchBreakdown.forEach((b) => {
+      lines.push(
+        `"${b.branchName}","${b.branchCode}","${b.classesCount}","${b.enrolledCount}","${b.daysCount}","${b.presentCount}","${b.absentCount}","${b.attendanceRate}%"`,
+      );
+    });
+    lines.push('');
+  }
+
   // Class comparison section
   lines.push(`"CLASS BREAKDOWN"`);
-  lines.push(`"Class Name","Grade","Section","Enrolled Students","Days Logged","Present Marks","Absent Marks","Attendance Rate (%)"`);
+  lines.push(
+    `"Class Name","Campus","Grade","Section","Enrolled Students","Days Logged","Present Marks","Absent Marks","Attendance Rate (%)"`,
+  );
   (report.classBreakdown || []).forEach((c) => {
     lines.push(
-      `"${c.className}","${c.grade}","${c.section}","${c.enrolledCount}","${c.daysCount}","${c.presentCount}","${c.absentCount}","${c.attendanceRate}%"`,
+      `"${c.className}","${c.branchName || 'Campus'}","${c.grade}","${c.section}","${c.enrolledCount}","${c.daysCount}","${c.presentCount}","${c.absentCount}","${c.attendanceRate}%"`,
     );
   });
   lines.push('');
@@ -85,17 +103,21 @@ function downloadReportCSV(report) {
   lines.push(`"DAILY ATTENDANCE LOG"`);
   lines.push(`"Date","Present Total","Absent Total","Attendance Rate (%)","Classes Recorded"`);
   (report.dailyBreakdown || []).forEach((d) => {
-    lines.push(`"${d.date}","${d.presentCount}","${d.absentCount}","${d.attendanceRate}%","${d.classesCount}"`);
+    lines.push(
+      `"${d.date}","${d.presentCount}","${d.absentCount}","${d.attendanceRate}%","${d.classesCount}"`,
+    );
   });
   lines.push('');
 
   // Student level breakdown section
   if (report.studentBreakdown && report.studentBreakdown.length > 0) {
     lines.push(`"STUDENT ATTENDANCE DETAILS"`);
-    lines.push(`"Roll No","Student Name","Admission No","Class","Days Present","Days Absent","Total Days","Attendance Rate (%)"`);
+    lines.push(
+      `"Roll No","Student Name","Admission No","Campus","Class","Days Present","Days Absent","Total Days","Attendance Rate (%)"`,
+    );
     report.studentBreakdown.forEach((s) => {
       lines.push(
-        `"${s.rollNo}","${s.studentName}","${s.admissionNo || ''}","${s.className}","${s.presentDays}","${s.absentDays}","${s.totalDays}","${s.attendanceRate}%"`,
+        `"${s.rollNo}","${s.studentName}","${s.admissionNo || ''}","${s.branchName || 'Campus'}","${s.className}","${s.presentDays}","${s.absentDays}","${s.totalDays}","${s.attendanceRate}%"`,
       );
     });
   }
@@ -105,7 +127,7 @@ function downloadReportCSV(report) {
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = `attendance_report_${report.period.startDate}_to_${report.period.endDate}.csv`;
+  a.download = `ruralattend_attendance_report_${report.period.startDate}_to_${report.period.endDate}.csv`;
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);
@@ -115,24 +137,52 @@ function downloadReportCSV(report) {
 /**
  * Attendance Report viewing and downloading modal.
  * Supports Academic Year, This Month, and custom Date Range picking.
+ * Works seamlessly in both Branch Admin portal and School Admin portal.
+ * @param {{
+ *   isOpen: boolean,
+ *   onClose: () => void,
+ *   branchId?: string,
+ *   academicYearId?: string,
+ *   activeYear?: object,
+ *   availableClasses?: Array<object>,
+ *   isSchoolAdmin?: boolean,
+ *   branches?: Array<object>,
+ * }} props
  */
 export default function AttendanceReportModal({
   isOpen,
   onClose,
-  branchId,
+  branchId = 'all',
   academicYearId,
   activeYear,
   availableClasses = [],
+  isSchoolAdmin = false,
+  branches = [],
 }) {
   const [scopeMode, setScopeMode] = useState('month'); // 'academic_year' | 'month' | 'custom'
   const [startDate, setStartDate] = useState(getStartOfMonthString());
   const [endDate, setEndDate] = useState(getTodayDateString());
+
+  // Branch and Class filters
+  const [selectedBranchId, setSelectedBranchId] = useState(branchId || 'all');
   const [selectedClassId, setSelectedClassId] = useState('all');
-  const [activeTab, setActiveTab] = useState('classes'); // 'classes' | 'daily' | 'students'
+
+  // Active view tab: 'branches' | 'classes' | 'daily' | 'students'
+  const [activeTab, setActiveTab] = useState(isSchoolAdmin && selectedBranchId === 'all' ? 'branches' : 'classes');
 
   const [report, setReport] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+
+  // Sync selectedBranchId if branchId prop changes or modal opens
+  useEffect(() => {
+    if (isOpen) {
+      const initialBranch = branchId || 'all';
+      setSelectedBranchId(initialBranch);
+      setSelectedClassId('all');
+      setActiveTab(isSchoolAdmin && initialBranch === 'all' ? 'branches' : 'classes');
+    }
+  }, [isOpen, branchId, isSchoolAdmin]);
 
   // Handle preset mode changes
   function handleScopeChange(newMode) {
@@ -151,16 +201,25 @@ export default function AttendanceReportModal({
     // If 'custom', keep the existing dates and allow user to edit
   }
 
-  // Fetch report whenever dates or class filter change
+  // Filter available classes according to selectedBranchId
+  const filteredAvailableClasses = availableClasses.filter((c) => {
+    if (!isSchoolAdmin || selectedBranchId === 'all') return true;
+    return c.branchId === selectedBranchId;
+  });
+
+  // Effective branch ID for API queries
+  const effectiveBranchId = isSchoolAdmin ? selectedBranchId : branchId;
+
+  // Fetch report whenever dates or filters change
   useEffect(() => {
-    if (!isOpen || !branchId) return;
+    if (!isOpen) return;
 
     let isCurrent = true;
     setIsLoading(true);
     setErrorMessage('');
 
     getAttendanceReport({
-      branchId,
+      branchId: effectiveBranchId,
       academicYearId,
       startDate,
       endDate,
@@ -184,13 +243,15 @@ export default function AttendanceReportModal({
     return () => {
       isCurrent = false;
     };
-  }, [isOpen, branchId, academicYearId, startDate, endDate, selectedClassId]);
+  }, [isOpen, effectiveBranchId, academicYearId, startDate, endDate, selectedClassId]);
 
   if (!isOpen) return null;
 
   function handlePrint() {
     window.print();
   }
+
+  const isMultiBranchReport = isSchoolAdmin && selectedBranchId === 'all';
 
   return (
     <div
@@ -201,6 +262,7 @@ export default function AttendanceReportModal({
       onKeyDown={(e) => {
         if (e.key === 'Escape') onClose();
       }}
+      role="presentation"
     >
       <section
         className="students-dialog attendance-report-dialog"
@@ -212,14 +274,18 @@ export default function AttendanceReportModal({
         <div className="students-dialog-header report-modal-header">
           <div>
             <div className="report-header-badge-row">
-              <span className="report-badge">Branch Report</span>
+              <span className="report-badge">
+                {isMultiBranchReport ? 'Organization Report' : 'Branch Report'}
+              </span>
               <span className="report-period-badge">
                 {formatDisplayDate(startDate)} — {formatDisplayDate(endDate)}
               </span>
             </div>
             <h2 id="report-dialog-title">Attendance Report &amp; Analytics</h2>
             <p className="report-header-subtext">
-              View aggregate branch attendance or download full records for the selected period.
+              {isMultiBranchReport
+                ? 'View aggregate organization attendance across all campuses or download full records for the selected period.'
+                : 'View aggregate branch attendance or download full records for the selected period.'}
             </p>
           </div>
           <button
@@ -297,6 +363,37 @@ export default function AttendanceReportModal({
               </div>
             </div>
 
+            {/* School Admin Campus Selector */}
+            {isSchoolAdmin && branches.length > 0 && (
+              <div className="report-class-filter-field">
+                <label htmlFor="report-branch-select">Campus</label>
+                <div className="attendance-grade-select-wrap">
+                  <Building2 size={13} className="filter-select-icon" aria-hidden="true" />
+                  <select
+                    id="report-branch-select"
+                    className="attendance-grade-select"
+                    value={selectedBranchId}
+                    onChange={(e) => {
+                      const newBranch = e.target.value;
+                      setSelectedBranchId(newBranch);
+                      setSelectedClassId('all');
+                      if (newBranch !== 'all' && activeTab === 'branches') {
+                        setActiveTab('classes');
+                      }
+                    }}
+                  >
+                    <option value="all">All Campuses</option>
+                    {branches.map((b) => (
+                      <option key={b.id || b.branchId} value={b.id || b.branchId}>
+                        {b.name || b.branchName} ({b.code || b.branchCode})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+            )}
+
+            {/* Classroom Selector */}
             <div className="report-class-filter-field">
               <label htmlFor="report-class-select">Class</label>
               <div className="attendance-grade-select-wrap">
@@ -308,9 +405,9 @@ export default function AttendanceReportModal({
                   onChange={(e) => setSelectedClassId(e.target.value)}
                 >
                   <option value="all">All Classes</option>
-                  {availableClasses.map((c) => (
+                  {filteredAvailableClasses.map((c) => (
                     <option key={c.classId || c.id} value={c.classId || c.id}>
-                      {c.name}
+                      {c.name} {isSchoolAdmin && c.branchCode ? `(${c.branchCode})` : ''}
                     </option>
                   ))}
                 </select>
@@ -380,7 +477,9 @@ export default function AttendanceReportModal({
                 <div className="attendance-rate-progress-wrap" aria-hidden="true">
                   <div
                     className="attendance-rate-progress-fill"
-                    style={{ width: `${Math.min(100, Math.max(0, report.summary.overallRate))}%` }}
+                    style={{
+                      width: `${Math.min(100, Math.max(0, report.summary.overallRate))}%`,
+                    }}
                   />
                 </div>
               </article>
@@ -415,8 +514,21 @@ export default function AttendanceReportModal({
               </article>
             </section>
 
-            {/* View navigation tabs */}
+            {/* View Navigation Tabs */}
             <div className="report-view-tabs" role="tablist">
+              {isMultiBranchReport && (
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected={activeTab === 'branches'}
+                  className={`attendance-tab${activeTab === 'branches' ? ' attendance-tab--active' : ''}`}
+                  onClick={() => setActiveTab('branches')}
+                >
+                  <Building2 size={13} aria-hidden="true" />
+                  <span>Campus Comparison ({report.branchBreakdown?.length || 0})</span>
+                </button>
+              )}
+
               <button
                 type="button"
                 role="tab"
@@ -425,8 +537,12 @@ export default function AttendanceReportModal({
                 onClick={() => setActiveTab('classes')}
               >
                 <Users size={13} aria-hidden="true" />
-                <span>Class Comparison ({report.classBreakdown.length})</span>
+                <span>
+                  {isMultiBranchReport ? 'Class Breakdown' : 'Class Comparison'} (
+                  {report.classBreakdown.length})
+                </span>
               </button>
+
               <button
                 type="button"
                 role="tab"
@@ -437,6 +553,7 @@ export default function AttendanceReportModal({
                 <Calendar size={13} aria-hidden="true" />
                 <span>Daily Trend Log ({report.dailyBreakdown.length} days)</span>
               </button>
+
               <button
                 type="button"
                 role="tab"
@@ -449,6 +566,70 @@ export default function AttendanceReportModal({
               </button>
             </div>
 
+            {/* Tab 0: Campus Comparison Table (For School Admin multi-branch) */}
+            {activeTab === 'branches' && isMultiBranchReport && (
+              <div className="report-table-card">
+                <table className="report-table">
+                  <thead>
+                    <tr>
+                      <th scope="col">Campus / Branch Name</th>
+                      <th scope="col">Campus Code</th>
+                      <th scope="col">Total Classes</th>
+                      <th scope="col">Enrolled Students</th>
+                      <th scope="col">Days Recorded</th>
+                      <th scope="col">Present Marks</th>
+                      <th scope="col">Absent Marks</th>
+                      <th scope="col" style={{ width: '180px' }}>
+                        Attendance Rate
+                      </th>
+                      <th scope="col">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {(report.branchBreakdown || []).map((b) => (
+                      <tr key={b.branchId}>
+                        <td>
+                          <strong>{b.branchName}</strong>
+                        </td>
+                        <td>
+                          <span className="teacher-staff-badge">{b.branchCode}</span>
+                        </td>
+                        <td>{b.classesCount} classes</td>
+                        <td>{b.enrolledCount}</td>
+                        <td>{b.daysCount}</td>
+                        <td className="text-present">{b.presentCount.toLocaleString()}</td>
+                        <td className="text-absent">{b.absentCount.toLocaleString()}</td>
+                        <td>
+                          <div className="report-table-rate-wrap">
+                            <strong>{b.attendanceRate}%</strong>
+                            <div className="attendance-rate-progress-wrap" aria-hidden="true">
+                              <div
+                                className="attendance-rate-progress-fill"
+                                style={{ width: `${b.attendanceRate}%` }}
+                              />
+                            </div>
+                          </div>
+                        </td>
+                        <td>
+                          <span
+                            className={`report-status-badge ${
+                              b.attendanceRate >= 90
+                                ? 'report-status-badge--success'
+                                : b.attendanceRate >= 80
+                                ? 'report-status-badge--warning'
+                                : 'report-status-badge--danger'
+                            }`}
+                          >
+                            {b.status}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+
             {/* Tab 1: Class Comparison Table */}
             {activeTab === 'classes' && (
               <div className="report-table-card">
@@ -456,12 +637,15 @@ export default function AttendanceReportModal({
                   <thead>
                     <tr>
                       <th scope="col">Class Name</th>
+                      {isMultiBranchReport && <th scope="col">Campus</th>}
                       <th scope="col">Grade</th>
                       <th scope="col">Enrolled</th>
                       <th scope="col">Days Recorded</th>
                       <th scope="col">Present Marks</th>
                       <th scope="col">Absent Marks</th>
-                      <th scope="col" style={{ width: '180px' }}>Attendance Rate</th>
+                      <th scope="col" style={{ width: '180px' }}>
+                        Attendance Rate
+                      </th>
                       <th scope="col">Status</th>
                     </tr>
                   </thead>
@@ -471,6 +655,14 @@ export default function AttendanceReportModal({
                         <td>
                           <strong>{c.className}</strong>
                         </td>
+                        {isMultiBranchReport && (
+                          <td>
+                            <span className="teacher-staff-badge" style={{ marginRight: '6px' }}>
+                              {c.branchCode}
+                            </span>
+                            <span>{c.branchName}</span>
+                          </td>
+                        )}
                         <td>{c.grade}</td>
                         <td>{c.enrolledCount}</td>
                         <td>{c.daysCount}</td>
@@ -520,7 +712,9 @@ export default function AttendanceReportModal({
                       <th scope="col">Date</th>
                       <th scope="col">Present Marks</th>
                       <th scope="col">Absent Marks</th>
-                      <th scope="col" style={{ width: '180px' }}>Daily Attendance Rate</th>
+                      <th scope="col" style={{ width: '180px' }}>
+                        Daily Attendance Rate
+                      </th>
                       <th scope="col">Classes Recorded</th>
                     </tr>
                   </thead>
@@ -531,8 +725,8 @@ export default function AttendanceReportModal({
                           <strong>{formatDisplayDate(d.date)}</strong>
                           <span className="report-date-iso">({d.date})</span>
                         </td>
-                        <td className="text-present">{d.presentCount}</td>
-                        <td className="text-absent">{d.absentCount}</td>
+                        <td className="text-present">{d.presentCount.toLocaleString()}</td>
+                        <td className="text-absent">{d.absentCount.toLocaleString()}</td>
                         <td>
                           <div className="report-table-rate-wrap">
                             <strong>{d.attendanceRate}%</strong>
@@ -560,16 +754,22 @@ export default function AttendanceReportModal({
                     <tr>
                       <th scope="col">Roll No</th>
                       <th scope="col">Student Name</th>
+                      {isMultiBranchReport && <th scope="col">Campus</th>}
                       <th scope="col">Class</th>
                       <th scope="col">Days Present</th>
                       <th scope="col">Days Absent</th>
-                      <th scope="col" style={{ width: '180px' }}>Rate</th>
+                      <th scope="col" style={{ width: '180px' }}>
+                        Rate
+                      </th>
                     </tr>
                   </thead>
                   <tbody>
                     {report.studentBreakdown.length === 0 ? (
                       <tr>
-                        <td colSpan={6} style={{ textAlign: 'center', padding: '24px' }}>
+                        <td
+                          colSpan={isMultiBranchReport ? 7 : 6}
+                          style={{ textAlign: 'center', padding: '24px' }}
+                        >
                           No student records found.
                         </td>
                       </tr>
@@ -583,6 +783,14 @@ export default function AttendanceReportModal({
                               <small className="report-student-adm">({s.admissionNo})</small>
                             )}
                           </td>
+                          {isMultiBranchReport && (
+                            <td>
+                              <span className="teacher-staff-badge" style={{ marginRight: '4px' }}>
+                                {s.branchCode}
+                              </span>
+                              <span>{s.branchName}</span>
+                            </td>
+                          )}
                           <td>{s.className}</td>
                           <td className="text-present">{s.presentDays}</td>
                           <td className="text-absent">{s.absentDays}</td>
@@ -612,11 +820,7 @@ export default function AttendanceReportModal({
           <p className="report-footer-note">
             RuralAttend Attendance Records · Synchronized with Local Cache &amp; Academic Database
           </p>
-          <button
-            type="button"
-            className="secondary-button"
-            onClick={onClose}
-          >
+          <button type="button" className="secondary-button" onClick={onClose}>
             Close
           </button>
         </div>

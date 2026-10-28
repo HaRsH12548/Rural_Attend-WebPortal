@@ -63,7 +63,8 @@ src/
 │   ├── App.jsx                     # Root router & route declarations
 │   └── layouts/
 │       ├── AuthLayout.jsx          # Public login layout
-│       └── BranchLayout.jsx        # Authenticated branch shell with sidebar & header
+│       ├── BranchLayout.jsx        # Authenticated branch shell with sidebar & header
+│       └── SchoolLayout.jsx        # Authenticated school admin shell with sidebar & header
 │
 ├── features/                       # Flat domain feature modules
 │   ├── auth/
@@ -73,6 +74,14 @@ src/
 │   │   ├── AuthPage.jsx            # Sign-in page
 │   │   ├── RequireAuth.jsx         # Route guard component
 │   │   └── schemas.js              # Zod validation schemas
+│   ├── school/
+│   │   ├── school.api.js           # Org overview, branch CRUD, admin provisioning, analytics API
+│   │   ├── school.api.test.js
+│   │   ├── BranchesPage.jsx        # Campus directory & CRUD management
+│   │   ├── BranchAdminsPage.jsx    # Branch administrator provisioning console
+│   │   ├── SchoolAttendanceAnalyticsPage.jsx # Multi-branch attendance monitoring & CSV export
+│   │   ├── SchoolSettingsPage.jsx  # Global institutional profile & settings
+│   │   └── IssuedCredentialsModal.jsx # One-time credentials slip modal with Print/Copy
 │   ├── dashboard/
 │   │   ├── branch.api.js           # Dashboard metrics API
 │   │   ├── branch.api.test.js
@@ -81,12 +90,18 @@ src/
 │   │   ├── attendance.api.js       # Daily attendance & roll submission API
 │   │   ├── attendance.api.test.js
 │   │   └── AttendancePage.jsx      # Daily attendance overview & roll sheet modal
-│   └── classes/
-│       ├── ClassesPage.jsx         # Classes and student management page
-│       ├── classes.api.js          # Class & student roster API
-│       ├── classes.api.test.js
-│       ├── studentImport.js        # CSV/Excel parsing utility
-│       └── studentImport.test.js
+│   ├── classes/
+│   │   ├── ClassesPage.jsx         # Classes and student management page
+│   │   ├── classes.api.js          # Class & student roster API
+│   │   ├── classes.api.test.js
+│   │   ├── studentImport.js        # CSV/Excel parsing utility
+│   │   └── studentImport.test.js
+│   ├── teachers/
+│   │   ├── TeachersPage.jsx        # Staff and mobile app credentials management
+│   │   ├── teachers.api.js         # Teacher creation & allotment API
+│   │   └── teachers.api.test.js
+│   └── students/
+│       └── StudentsPage.jsx        # Student roster overview
 │
 ├── lib/
 │   ├── constants.js                # ROLES, PERMISSIONS, limits
@@ -126,12 +141,17 @@ src/
 | Path | Layout | Guard | Component |
 |------|--------|-------|-----------|
 | `/login` | `AuthLayout` | Public | `AuthPage` |
-| `/school/dashboard` | Standalone | `RequireAuth(SCHOOL_ADMIN)` | `SchoolWorkspacePlaceholder` |
+| `/school` | `SchoolLayout` | `RequireAuth(SCHOOL_ADMIN)` | Redirects to `/school/branches` |
+| `/school/branches` | `SchoolLayout` | `RequireAuth(SCHOOL_ADMIN)` | `BranchesPage` |
+| `/school/admins` | `SchoolLayout` | `RequireAuth(SCHOOL_ADMIN)` | `BranchAdminsPage` |
+| `/school/attendance` | `SchoolLayout` | `RequireAuth(SCHOOL_ADMIN)` | `SchoolAttendanceAnalyticsPage` |
+| `/school/settings` | `SchoolLayout` | `RequireAuth(SCHOOL_ADMIN)` | `SchoolSettingsPage` |
 | `/branch` | `BranchLayout` | `RequireAuth(BRANCH_ADMIN)` | Redirects to `/branch/dashboard` |
 | `/branch/dashboard` | `BranchLayout` | `RequireAuth(BRANCH_ADMIN)` | `BranchDashboardPage` |
 | `/branch/attendance` | `BranchLayout` | `RequireAuth(BRANCH_ADMIN)` | `AttendancePage` |
 | `/branch/classes` | `BranchLayout` | `RequireAuth(BRANCH_ADMIN)` | `ClassesPage` |
-| `/branch/students` | `BranchLayout` | `RequireAuth(BRANCH_ADMIN)` | Redirects to `/branch/classes` |
+| `/branch/teachers` | `BranchLayout` | `RequireAuth(BRANCH_ADMIN)` | `TeachersPage` |
+| `/branch/students` | `BranchLayout` | `RequireAuth(BRANCH_ADMIN)` | `StudentsPage` |
 | `*` | — | None | Redirects to `/login` |
 
 ---
